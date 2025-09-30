@@ -19,7 +19,7 @@ public class UsersController : Controller
         this.mapper = mapper;
     }
 
-    [HttpGet("{userId:guid}", Name = nameof(GetUserById))]
+    [HttpGet("{userId}", Name = nameof(GetUserById))]
     [Produces("application/json", "application/xml")]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
@@ -49,5 +49,25 @@ public class UsersController : Controller
         var createdUserEntity = userRepository.Insert(mapper.Map<UserEntity>(user));
 
         return CreatedAtRoute(nameof(GetUserById), new { userId = createdUserEntity.Id }, createdUserEntity.Id);
+    }
+
+    [HttpPut("{userId}")]
+    [Produces("application/json", "application/xml")]
+    public IActionResult UpdateUser([FromBody] UserUpdateDto? userDto, Guid userId)
+    {
+        if (userDto is null || Guid.Empty == userId)
+            return BadRequest();
+
+        if (!ModelState.IsValid)
+            return UnprocessableEntity(ModelState);
+
+        var userEntity = userRepository.FindById(userId) ?? new UserEntity(userId);
+        userEntity = mapper.Map(userDto, userEntity);
+
+        userRepository.UpdateOrInsert(userEntity, out var isInserted);
+        if (isInserted)
+            return CreatedAtRoute(nameof(GetUserById), new { userId = userEntity.Id }, userEntity.Id);
+
+        return NoContent();
     }
 }
