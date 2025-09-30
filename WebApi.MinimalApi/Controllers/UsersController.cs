@@ -67,9 +67,8 @@ public class UsersController : Controller
             return UnprocessableEntity(ModelState);
 
         var userEntity = userRepository.FindById(userId) ?? new UserEntity(userId);
-        userEntity = mapper.Map(userDto, userEntity);
 
-        userRepository.UpdateOrInsert(userEntity, out var isInserted);
+        userRepository.UpdateOrInsert(mapper.Map(userDto, userEntity), out var isInserted);
         if (isInserted)
             return CreatedAtRoute(nameof(GetUserById), new { userId = userEntity.Id }, userEntity.Id);
 
