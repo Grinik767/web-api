@@ -32,7 +32,7 @@ public class UsersController : Controller
     }
 
     [HttpPost]
-    public IActionResult CreateUser([FromBody] UserCreateDto? user)
+    public ActionResult<Guid> CreateUser([FromBody] UserCreateDto? user)
     {
         if (user is null)
             return BadRequest();
@@ -52,7 +52,7 @@ public class UsersController : Controller
     }
 
     [HttpPut("{userId}")]
-    public IActionResult UpdateUser([FromBody] UserUpdateDto? userDto, Guid userId)
+    public ActionResult UpdateUser([FromBody] UserUpdateDto? userDto, Guid userId)
     {
         if (userDto is null || Guid.Empty == userId)
             return BadRequest();
@@ -71,7 +71,7 @@ public class UsersController : Controller
     }
 
     [HttpPatch("{userId}")]
-    public IActionResult PatchUser([FromBody] JsonPatchDocument<UserUpdateDto>? patchDoc, Guid userId)
+    public ActionResult PatchUser([FromBody] JsonPatchDocument<UserUpdateDto>? patchDoc, Guid userId)
     {
         if (patchDoc is null)
             return BadRequest();
@@ -87,6 +87,16 @@ public class UsersController : Controller
             return UnprocessableEntity(ModelState);
 
         userRepository.Update(mapper.Map(updateDto, userEntity));
+        return NoContent();
+    }
+
+    [HttpDelete("{userId}")]
+    public IActionResult DeleteUser(Guid userId)
+    {
+        if (userRepository.FindById(userId) is null)
+            return NotFound();
+
+        userRepository.Delete(userId);
         return NoContent();
     }
 }
