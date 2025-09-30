@@ -22,13 +22,18 @@ public class UsersController : Controller
     }
 
     [HttpGet("{userId}", Name = nameof(GetUserById))]
+    [HttpHead("{userId}")]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
         var user = userRepository.FindById(userId);
         if (user is null)
             return NotFound();
 
-        return Ok(mapper.Map<UserDto>(user));
+        if (!HttpMethods.IsHead(Request.Method))
+            return Ok(mapper.Map<UserDto>(user));
+
+        Response.Headers.Append("Content-Type", "application/json; charset=utf-8");
+        return Ok();
     }
 
     [HttpPost]
