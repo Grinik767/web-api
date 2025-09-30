@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using WebApi.MinimalApi.Domain;
@@ -6,8 +7,9 @@ using WebApi.MinimalApi.Models;
 
 namespace WebApi.MinimalApi.Controllers;
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
+[Produces("application/json", "application/xml")]
 public class UsersController : Controller
 {
     private readonly IUserRepository userRepository;
@@ -20,7 +22,6 @@ public class UsersController : Controller
     }
 
     [HttpGet("{userId}", Name = nameof(GetUserById))]
-    [Produces("application/json", "application/xml")]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
         var user = userRepository.FindById(userId);
@@ -31,7 +32,6 @@ public class UsersController : Controller
     }
 
     [HttpPost]
-    [Produces("application/json", "application/xml")]
     public IActionResult CreateUser([FromBody] UserCreateDto? user)
     {
         if (user is null)
@@ -52,7 +52,6 @@ public class UsersController : Controller
     }
 
     [HttpPut("{userId}")]
-    [Produces("application/json", "application/xml")]
     public IActionResult UpdateUser([FromBody] UserUpdateDto? userDto, Guid userId)
     {
         if (userDto is null || Guid.Empty == userId)
@@ -68,6 +67,26 @@ public class UsersController : Controller
         if (isInserted)
             return CreatedAtRoute(nameof(GetUserById), new { userId = userEntity.Id }, userEntity.Id);
 
+        return NoContent();
+    }
+
+    [HttpPatch("{userId}")]
+    public IActionResult PatchUser([FromBody] JsonPatchDocument<UserUpdateDto>? patchDoc, Guid userId)
+    {
+        if (patchDoc is null)
+            return BadRequest();
+
+        var userEntity = userRepository.FindById(userId);
+        if (userEntity is null)
+            return NotFound();
+
+        var updateDto = mapper.Map<UserUpdateDto>(userEntity);
+        patchDoc.ApplyTo(updateDto, ModelState);
+
+        if (!TryValidateModel(updateDto))
+            return UnprocessableEntity(ModelState);
+
+        userRepository.Update(mapper.Map(updateDto, userEntity));
         return NoContent();
     }
 }
