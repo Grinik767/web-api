@@ -107,7 +107,7 @@ public class UsersController : Controller
     }
 
     [HttpGet(Name = nameof(GetUsers))]
-    public ActionResult GetUsers([FromQuery] UsersGetDto dto)
+    public ActionResult<IEnumerable<UserDto>> GetUsers([FromQuery] UsersGetDto dto)
     {
         var usersPage = userRepository.GetPage(dto.PageNumber, dto.PageSize);
         var paginationHeader = new
@@ -128,5 +128,12 @@ public class UsersController : Controller
 
         Response.Headers.Append("X-Pagination", JsonConvert.SerializeObject(paginationHeader));
         return Ok(mapper.Map<IEnumerable<UserDto>>(usersPage));
+    }
+
+    [HttpOptions]
+    public ActionResult Options()
+    {
+        Response.Headers.Append("Allow", "POST, GET, OPTIONS");
+        return Ok();
     }
 }
