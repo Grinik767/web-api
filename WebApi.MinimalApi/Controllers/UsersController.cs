@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Swashbuckle.AspNetCore.Annotations;
 using WebApi.MinimalApi.Domain;
 using WebApi.MinimalApi.Models;
 
@@ -25,6 +26,8 @@ public class UsersController : Controller
 
     [HttpGet("{userId}", Name = nameof(GetUserById))]
     [HttpHead("{userId}")]
+    [SwaggerResponse(200, "OK", typeof(UserDto))]
+    [SwaggerResponse(404, "Пользователь не найден")]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
         var user = userRepository.FindById(userId);
@@ -38,6 +41,10 @@ public class UsersController : Controller
     }
 
     [HttpPost]
+    [Consumes("application/json")]
+    [SwaggerResponse(201, "Пользователь создан")]
+    [SwaggerResponse(400, "Некорректные входные данные")]
+    [SwaggerResponse(422, "Ошибка при проверке")]
     public ActionResult<Guid> CreateUser([FromBody] UserCreateDto? user)
     {
         if (user is null)
@@ -58,6 +65,11 @@ public class UsersController : Controller
     }
 
     [HttpPut("{userId}")]
+    [Consumes("application/json")]
+    [SwaggerResponse(201, "Пользователь создан")]
+    [SwaggerResponse(204, "Пользователь обновлен")]
+    [SwaggerResponse(400, "Некорректные входные данные")]
+    [SwaggerResponse(422, "Ошибка при проверке")]
     public ActionResult UpdateUser([FromBody] UserUpdateDto? userDto, Guid userId)
     {
         if (userDto is null || Guid.Empty == userId)
@@ -76,6 +88,11 @@ public class UsersController : Controller
     }
 
     [HttpPatch("{userId}")]
+    [Consumes("application/json-patch+json")]
+    [SwaggerResponse(204, "Пользователь обновлен")]
+    [SwaggerResponse(400, "Некорректные входные данные")]
+    [SwaggerResponse(404, "Пользователь не найден")]
+    [SwaggerResponse(422, "Ошибка при проверке")]
     public ActionResult PatchUser([FromBody] JsonPatchDocument<UserUpdateDto>? patchDoc, Guid userId)
     {
         if (patchDoc is null)
@@ -96,6 +113,8 @@ public class UsersController : Controller
     }
 
     [HttpDelete("{userId}")]
+    [SwaggerResponse(204, "Пользователь удален")]
+    [SwaggerResponse(404, "Пользователь не найден")]
     public ActionResult DeleteUser(Guid userId)
     {
         if (userRepository.FindById(userId) is null)
@@ -106,6 +125,7 @@ public class UsersController : Controller
     }
 
     [HttpGet(Name = nameof(GetUsers))]
+    [ProducesResponseType(typeof(IEnumerable<UserDto>), 200)]
     public ActionResult<IEnumerable<UserDto>> GetUsers([FromQuery] UsersGetDto dto)
     {
         var usersPage = userRepository.GetPage(dto.PageNumber, dto.PageSize);
@@ -130,6 +150,7 @@ public class UsersController : Controller
     }
 
     [HttpOptions]
+    [SwaggerResponse(200, "OK")]
     public ActionResult Options()
     {
         Response.Headers.Append("Allow", "POST, GET, OPTIONS");
